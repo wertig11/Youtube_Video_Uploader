@@ -1,0 +1,118 @@
+<UserControl x:Class="YouTubeVideoUploader.UI.Views.RenameView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:YouTubeVideoUploader.UI.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+    
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Folder Selection -->
+        <GroupBox Header="{Binding L.FolderPath}" Grid.Row="0" Margin="0,0,0,10" Padding="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding FolderPath, UpdateSourceTrigger=PropertyChanged}" Tag="Select video folder path..." ToolTip="Path to the directory containing video files you want to rename." Height="30" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                <Button Content="{Binding L.Browse}" Command="{Binding BrowseFolderCommand}" ToolTip="Choose a directory on your computer." Grid.Column="1" Width="80" Height="30"/>
+            </Grid>
+        </GroupBox>
+
+        <!-- 2. Strategy & Presets -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <GroupBox Header="{Binding L.RenameStrategy}" Margin="0,0,5,0" Padding="10">
+                <ComboBox ItemsSource="{Binding AvailableStrategies}" SelectedItem="{Binding SelectedStrategy}" DisplayMemberPath="DisplayName" ToolTip="List-based: Renames files based on level names pasted below. Date-based: Renames files using their creation dates." Height="26"/>
+            </GroupBox>
+
+            <GroupBox Header="{Binding L.PresetsTitle}" Grid.Column="1" Margin="5,0,0,0" Padding="10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox ItemsSource="{Binding Presets}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedItem, ElementName=PresetsList}" x:Name="PresetsList" ToolTip="Select a saved profile config to apply preset parameters." Height="26" Margin="0,0,10,0">
+                        <ComboBox.InputBindings>
+                            <!-- SelectionChanged style trigger via code-behind or event trigger -->
+                        </ComboBox.InputBindings>
+                    </ComboBox>
+                    <Button Content="{Binding L.LoadPreset}" Click="LoadPreset_Click" ToolTip="Load selected profile settings." Grid.Column="1" Width="80" Height="26"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- 3. Template & Names list -->
+        <GroupBox Header="{Binding L.Template}" Grid.Row="2" Margin="0,0,0,10" Padding="10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBox Text="{Binding TemplatePattern, UpdateSourceTrigger=PropertyChanged}" Tag="e.g. Doom Coop #{Number} - {LevelName}" ToolTip="Define the rename pattern. Placeholders: {Number} - file index, {LevelName} - level title, {Date:format} - creation date (e.g. {Date:yyyy-MM-dd_HH-mm-ss})." Height="30" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
+                
+                <TextBlock Text="{Binding L.NameListLabel}" FontWeight="SemiBold" Margin="0,0,0,5" Grid.Row="1"/>
+                <TextBox Text="{Binding NamesText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Height="100" Grid.Row="2" TextWrapping="Wrap" AcceptsTab="True" Tag="Paste the list of levels/names here, one per line..." ToolTip="Each line represents one name substituted into the {LevelName} placeholder in index order." VerticalContentAlignment="Top"/>
+            </Grid>
+        </GroupBox>
+
+        <!-- 4. Preview Table -->
+        <GroupBox Header="{Binding L.PreviewTitle}" Grid.Row="3" Margin="0,0,0,10" Padding="5">
+            <DataGrid ItemsSource="{Binding PreviewItems}" AutoGenerateColumns="False" CanUserAddRows="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" SelectionMode="Single" Background="White">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{Binding DataContext.L.HeaderOriginalName, RelativeSource={RelativeSource AncestorType=UserControl}}" Binding="{Binding OldName}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="➔" Width="Auto" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="{Binding DataContext.L.HeaderNewName, RelativeSource={RelativeSource AncestorType=UserControl}}" Binding="{Binding NewName}" Width="*" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#1E1E1E"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsNameChanged}" Value="False">
+                                        <Setter Property="Foreground" Value="Gray"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <!-- 5. Actions -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Save Preset Input -->
+            <StackPanel Orientation="Horizontal" Grid.Column="0">
+                <TextBlock Text="{Binding L.PresetNamePrompt}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <TextBox Text="{Binding PresetName, UpdateSourceTrigger=PropertyChanged}" Tag="New preset name..." ToolTip="Enter a name to save these settings as a preset profile." Width="150" Height="30" VerticalContentAlignment="Center" Margin="0,0,5,0"/>
+                <Button Content="{Binding L.SavePreset}" Command="{Binding SaveAsPresetCommand}" ToolTip="Save current settings under the entered profile name." Width="100" Height="30"/>
+            </StackPanel>
+
+            <Button Content="{Binding L.Preview}" Command="{Binding PreviewRenamesCommand}" ToolTip="Generate rename preview in table without modifying files on disk." Grid.Column="2" Width="100" Height="30" Margin="0,0,10,0" Background="#F3F4F6"/>
+            <StackPanel Orientation="Horizontal" Grid.Column="3">
+                <Button Content="{Binding L.Undo}" Command="{Binding UndoRenamesCommand}" IsEnabled="{Binding CanUndo}" ToolTip="Revert the last executed batch of renames." Width="100" Height="30" Margin="0,0,10,0"/>
+                <Button Content="{Binding L.Rename}" Command="{Binding ExecuteRenamesCommand}" ToolTip="Execute renaming operations on disk files." Width="100" Height="30" Background="#3B82F6" Foreground="White" FontWeight="Bold"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

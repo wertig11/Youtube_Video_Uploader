@@ -1,0 +1,71 @@
+<Window x:Class="YouTubeVideoUploader.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:YouTubeVideoUploader.UI"
+        xmlns:views="clr-namespace:YouTubeVideoUploader.UI.Views"
+        mc:Ignorable="d"
+        Title="{Binding L.AppTitle}" Height="700" Width="950"
+        WindowStartupLocation="CenterScreen" Background="#F9FAFB">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Panel -->
+        <Border Background="#1E293B" Padding="15,12" BorderThickness="0,0,0,1" BorderBrush="#0F172A">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding L.AppTitle}" FontSize="20" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock Text="v2.0" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Bottom" Grid.Column="1" Margin="5,0,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Main Tab Control -->
+        <TabControl Grid.Row="1" TabStripPlacement="Left" Margin="0,5,0,0" BorderThickness="0" Background="Transparent">
+            <!-- Sidebar Tab Item Header Templates -->
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <ContentPresenter Content="{TemplateBinding Content}" Margin="10,6" Width="130"/>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Padding" Value="10,8"/>
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Foreground" Value="#475569"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Foreground" Value="#1E293B"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </TabControl.Resources>
+
+            <!-- Tab 1: Rename Files -->
+            <TabItem Header="{Binding L.TabRename}">
+                <views:RenameView DataContext="{Binding RenameVM}"/>
+            </TabItem>
+
+            <!-- Tab 2: Upload Videos -->
+            <TabItem Header="{Binding L.TabUpload}">
+                <views:UploadView DataContext="{Binding UploadVM}"/>
+            </TabItem>
+
+            <!-- Tab 3: Settings -->
+            <TabItem Header="{Binding L.TabSettings}">
+                <views:SettingsView DataContext="{Binding SettingsVM}"/>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
