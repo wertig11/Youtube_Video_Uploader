@@ -36,6 +36,16 @@ public record RenameTemplate
         int number = index + 1;
         result = result.Replace("{Number}", number.ToString(), StringComparison.OrdinalIgnoreCase);
 
+        // Replace custom start index numbers like {17}
+        result = System.Text.RegularExpressions.Regex.Replace(result, @"\{(\d+)\}", m =>
+        {
+            if (int.TryParse(m.Groups[1].Value, out int startNum))
+            {
+                return (startNum + index).ToString();
+            }
+            return m.Value;
+        });
+
         // Replace level name placeholder if index is within range of the list
         string levelName = index < Names.Count ? Names[index] : $"Level {number}";
         result = result.Replace("{LevelName}", levelName, StringComparison.OrdinalIgnoreCase);

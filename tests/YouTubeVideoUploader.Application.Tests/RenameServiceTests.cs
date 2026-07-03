@@ -106,4 +106,25 @@ public class RenameServiceTests
         Assert.Equal("fileA.mp4", preview[1].OldName);
         Assert.Equal("Video #2.mp4", preview[1].NewName);
     }
+
+    [Fact]
+    public void RenameTemplate_CustomStartIndex_ShouldIncrementCorrectly()
+    {
+        // Arrange
+        var template = new RenameTemplate
+        {
+            Pattern = "Brotato Coop #{17}",
+            Names = Array.Empty<string>()
+        };
+
+        // Act
+        string name0 = template.GenerateName(0);
+        string name1 = template.GenerateName(1);
+        string name2 = template.GenerateName(2);
+
+        // Assert
+        Assert.Equal("Brotato Coop #17", name0);
+        Assert.Equal("Brotato Coop #18", name1);
+        Assert.Equal("Brotato Coop #19", name2);
+    }
 }
