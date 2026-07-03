@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using YouTubeVideoUploader.Domain.Enums;
 using YouTubeVideoUploader.Domain.ValueObjects;
 
@@ -6,8 +8,21 @@ namespace YouTubeVideoUploader.Domain.Entities;
 /// <summary>
 /// Represents a job to upload a video to YouTube.
 /// </summary>
-public class UploadJob
+public class UploadJob : INotifyPropertyChanged
 {
+    /// <summary>
+    /// Occurs when a property value changes.
+    /// </summary>
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// Raises the PropertyChanged event.
+    /// </summary>
+    /// <param name="propertyName">The name of the property that changed.</param>
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
     private readonly VideoFile _videoFile;
 
     /// <summary>
@@ -93,6 +108,7 @@ public class UploadJob
     public void MarkUploading()
     {
         Status = UploadStatus.Uploading;
+        OnPropertyChanged(nameof(Status));
     }
 
     /// <summary>
@@ -106,6 +122,9 @@ public class UploadJob
         Status = UploadStatus.Completed;
         YouTubeVideoId = videoId;
         ErrorMessage = null;
+        OnPropertyChanged(nameof(Status));
+        OnPropertyChanged(nameof(YouTubeVideoId));
+        OnPropertyChanged(nameof(ErrorMessage));
     }
 
     /// <summary>
@@ -118,6 +137,8 @@ public class UploadJob
         ArgumentNullException.ThrowIfNull(error);
         Status = UploadStatus.Failed;
         ErrorMessage = error;
+        OnPropertyChanged(nameof(Status));
+        OnPropertyChanged(nameof(ErrorMessage));
     }
 
     /// <summary>
@@ -126,5 +147,6 @@ public class UploadJob
     public void MarkSkipped()
     {
         Status = UploadStatus.Skipped;
+        OnPropertyChanged(nameof(Status));
     }
 }

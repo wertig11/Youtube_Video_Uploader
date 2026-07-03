@@ -121,7 +121,6 @@
         <GroupBox Header="Videos Batch List" Grid.Row="2" Margin="0,0,0,10" Padding="5">
             <DataGrid ItemsSource="{Binding UploadJobs}" AutoGenerateColumns="False" CanUserAddRows="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" SelectionMode="Single" Background="White">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="{Binding DataContext.L.HeaderFileName, RelativeSource={RelativeSource AncestorType=UserControl}}" Binding="{Binding VideoFile.FileName}" Width="*" IsReadOnly="True"/>
                     <DataGridTextColumn Header="{Binding DataContext.L.HeaderTitle, RelativeSource={RelativeSource AncestorType=UserControl}}" Binding="{Binding Title}" Width="*" IsReadOnly="True"/>
                     <DataGridTextColumn Header="{Binding DataContext.L.HeaderPublishDate, RelativeSource={RelativeSource AncestorType=UserControl}}" Binding="{Binding ScheduledPublishDate, StringFormat='\{0:yyyy-MM-dd HH:mm UTC\}'}" Width="160" IsReadOnly="True"/>
                     <DataGridTemplateColumn Header="{Binding DataContext.L.HeaderStatus, RelativeSource={RelativeSource AncestorType=UserControl}}" Width="120" IsReadOnly="True">
