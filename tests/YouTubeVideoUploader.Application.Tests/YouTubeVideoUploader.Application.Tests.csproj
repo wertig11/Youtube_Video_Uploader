@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\YouTubeVideoUploader.Application\YouTubeVideoUploader.Application.csproj" />
     <ProjectReference Include="..\..\src\YouTubeVideoUploader.Domain\YouTubeVideoUploader.Domain.csproj" />
+    <ProjectReference Include="..\..\src\YouTubeVideoUploader.Infrastructure\YouTubeVideoUploader.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

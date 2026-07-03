@@ -37,10 +37,12 @@ public partial class App : System.Windows.Application
                 // 1. Persistence & Infrastructure Setup
                 string presetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "presets.json");
                 string uploadLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "uploaded_log.txt");
+                string appStatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_state.json");
 
                 services.AddSingleton<IFileSystemRepository, FileSystemRepository>();
                 services.AddSingleton<IUploadLogRepository>(sp => new TxtUploadLogRepository(uploadLogPath));
                 services.AddSingleton<IPresetStore>(sp => new JsonPresetStore(presetsPath));
+                services.AddSingleton<IAppStateService>(sp => new JsonAppStateService(appStatePath));
                 services.AddSingleton<IAuthenticationService, GoogleAuthService>();
                 services.AddSingleton<IYouTubeGateway, YouTubeApiAdapter>();
 

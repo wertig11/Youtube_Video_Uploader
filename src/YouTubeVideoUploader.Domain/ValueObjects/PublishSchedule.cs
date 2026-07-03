@@ -30,7 +30,8 @@ public record PublishSchedule
     /// <returns>The calculated DateTime in UTC.</returns>
     public DateTime CalculatePublishDateTime(int videoIndex)
     {
-        DateOnly date = StartDate.AddDays(videoIndex * IntervalDays);
+        int stepDays = IntervalDays + 1;
+        DateOnly date = StartDate.AddDays(videoIndex * stepDays);
         return date.ToDateTime(PublishTime, DateTimeKind.Utc);
     }
 }

@@ -19,6 +19,16 @@ public interface IRenameService
     IReadOnlyList<RenamePair> PreviewRenames(string directoryPath, RenameTemplate template, IRenameStrategy strategy);
 
     /// <summary>
+    /// Previews the rename operations for a specific list of selected file paths.
+    /// </summary>
+    /// <param name="directoryPath">The target directory.</param>
+    /// <param name="selectedFilePaths">The list of specific file paths to rename.</param>
+    /// <param name="template">The template with names and pattern.</param>
+    /// <param name="strategy">The rename strategy to apply.</param>
+    /// <returns>A read-only list of proposed rename operations.</returns>
+    IReadOnlyList<RenamePair> PreviewRenamesSelected(string directoryPath, IReadOnlyList<string> selectedFilePaths, RenameTemplate template, IRenameStrategy strategy);
+
+    /// <summary>
     /// Executes the rename operations for the given pairs.
     /// </summary>
     /// <param name="pairs">The rename pairs to execute.</param>

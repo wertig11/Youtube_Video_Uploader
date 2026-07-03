@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -18,6 +19,8 @@ public partial class RenameViewModel : ObservableObject
     private readonly IRenameService _renameService;
     private readonly IPresetStore _presetStore;
     private readonly IEnumerable<IRenameStrategy> _strategies;
+    private readonly IAppStateService _appStateService;
+    private List<string> _selectedFilePaths = new();
 
     [ObservableProperty]
     private string _folderPath = string.Empty;
@@ -48,19 +51,51 @@ public partial class RenameViewModel : ObservableObject
     public RenameViewModel(
         IRenameService renameService,
         IPresetStore presetStore,
-        IEnumerable<IRenameStrategy> strategies)
+        IEnumerable<IRenameStrategy> strategies,
+        IAppStateService appStateService)
     {
         _renameService = renameService ?? throw new ArgumentNullException(nameof(renameService));
         _presetStore = presetStore ?? throw new ArgumentNullException(nameof(presetStore));
         _strategies = strategies ?? throw new ArgumentNullException(nameof(strategies));
+        _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
 
         foreach (var strategy in _strategies)
         {
             AvailableStrategies.Add(strategy);
         }
 
-        SelectedStrategy = AvailableStrategies.FirstOrDefault();
+        // Load saved state
+        var state = _appStateService.LoadState();
+        FolderPath = state.RenameFolderPath;
+        TemplatePattern = state.RenameTemplatePattern;
+        NamesText = state.RenameNamesText;
+        
+        SelectedStrategy = AvailableStrategies.FirstOrDefault(s => s.DisplayName == state.SelectedStrategyName) 
+                           ?? AvailableStrategies.FirstOrDefault();
+
         LoadPresets();
+    }
+
+    partial void OnFolderPathChanged(string value) => SaveCurrentState();
+    partial void OnTemplatePatternChanged(string value) => SaveCurrentState();
+    partial void OnNamesTextChanged(string value) => SaveCurrentState();
+    partial void OnSelectedStrategyChanged(IRenameStrategy? value) => SaveCurrentState();
+
+    private void SaveCurrentState()
+    {
+        try
+        {
+            var state = _appStateService.LoadState();
+            state.RenameFolderPath = FolderPath;
+            state.RenameTemplatePattern = TemplatePattern;
+            state.RenameNamesText = NamesText;
+            state.SelectedStrategyName = SelectedStrategy?.DisplayName ?? string.Empty;
+            _appStateService.SaveState(state);
+        }
+        catch
+        {
+            // Fail silent on UI binding background save
+        }
     }
 
     private void LoadPresets()
@@ -79,6 +114,26 @@ public partial class RenameViewModel : ObservableObject
         if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
         {
             FolderPath = dialog.SelectedPath;
+        }
+    }
+
+    [RelayCommand]
+    private void SelectFiles()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Multiselect = true,
+            Filter = "Video Files|*.mp4;*.mkv;*.mov|All Files|*.*"
+        };
+        
+        if (dialog.ShowDialog() == true)
+        {
+            _selectedFilePaths = dialog.FileNames.ToList();
+            if (_selectedFilePaths.Count > 0)
+            {
+                FolderPath = Path.GetDirectoryName(_selectedFilePaths[0]) ?? string.Empty;
+                PreviewRenames();
+            }
         }
     }
 
@@ -110,7 +165,15 @@ public partial class RenameViewModel : ObservableObject
                 Names = names
             };
 
-            var pairs = _renameService.PreviewRenames(FolderPath, template, SelectedStrategy);
+            IReadOnlyList<RenamePair> pairs;
+            if (_selectedFilePaths != null && _selectedFilePaths.Count > 0)
+            {
+                pairs = _renameService.PreviewRenamesSelected(FolderPath, _selectedFilePaths, template, SelectedStrategy);
+            }
+            else
+            {
+                pairs = _renameService.PreviewRenames(FolderPath, template, SelectedStrategy);
+            }
             
             foreach (var pair in pairs)
             {

@@ -19,6 +19,7 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly IPresetStore _presetStore;
     private readonly IFileSystemRepository _fileSystemRepository;
+    private readonly IAppStateService _appStateService;
 
     [ObservableProperty]
     private string _clientSecretPath = "client_secret.json";
@@ -33,21 +34,43 @@ public partial class SettingsViewModel : ObservableObject
 
     public SettingsViewModel(
         IPresetStore presetStore,
-        IFileSystemRepository fileSystemRepository)
+        IFileSystemRepository fileSystemRepository,
+        IAppStateService appStateService)
     {
         _presetStore = presetStore ?? throw new ArgumentNullException(nameof(presetStore));
         _fileSystemRepository = fileSystemRepository ?? throw new ArgumentNullException(nameof(fileSystemRepository));
+        _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
 
-        SelectedLanguage = LanguageManager.Instance.CurrentLanguage;
+        // Load saved state
+        var state = _appStateService.LoadState();
+        ClientSecretPath = string.IsNullOrEmpty(state.ClientSecretPath) ? "client_secret.json" : state.ClientSecretPath;
+        SelectedLanguage = string.IsNullOrEmpty(state.Language) ? LanguageManager.Instance.CurrentLanguage : state.Language;
+        LanguageManager.Instance.CurrentLanguage = SelectedLanguage;
         
-        // Try locating client_secret.json in app directory as default
-        string defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client_secret.json");
-        if (File.Exists(defaultPath))
-        {
-            ClientSecretPath = defaultPath;
-        }
-
         LoadPresets();
+    }
+
+    partial void OnClientSecretPathChanged(string value) => SaveCurrentState();
+    
+    partial void OnSelectedLanguageChanged(string value)
+    {
+        LanguageManager.Instance.CurrentLanguage = value;
+        SaveCurrentState();
+    }
+
+    private void SaveCurrentState()
+    {
+        try
+        {
+            var state = _appStateService.LoadState();
+            state.ClientSecretPath = ClientSecretPath;
+            state.Language = SelectedLanguage;
+            _appStateService.SaveState(state);
+        }
+        catch
+        {
+            // Fail silent
+        }
     }
 
     private void LoadPresets()

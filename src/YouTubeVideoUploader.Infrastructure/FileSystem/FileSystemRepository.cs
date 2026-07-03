@@ -43,6 +43,33 @@ public class FileSystemRepository : IFileSystemRepository
     }
 
     /// <inheritdoc />
+    public IReadOnlyList<VideoFile> GetVideoFilesFromPaths(IReadOnlyList<string> filePaths)
+    {
+        if (filePaths == null) return Array.Empty<VideoFile>();
+
+        var files = new List<VideoFile>();
+        foreach (var path in filePaths)
+        {
+            if (File.Exists(path))
+            {
+                var fi = new FileInfo(path);
+                var vf = new VideoFile(
+                    fi.FullName,
+                    fi.Name,
+                    fi.Extension,
+                    fi.LastWriteTime,
+                    fi.Length
+                );
+                if (vf.IsSupported())
+                {
+                    files.Add(vf);
+                }
+            }
+        }
+        return files;
+    }
+
+    /// <inheritdoc />
     public void RenameFile(VideoFile file, string newFileName)
     {
         ArgumentNullException.ThrowIfNull(file);

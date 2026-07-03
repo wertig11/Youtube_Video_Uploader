@@ -16,6 +16,13 @@ public interface IFileSystemRepository
     IReadOnlyList<VideoFile> GetVideoFiles(string directoryPath);
 
     /// <summary>
+    /// Gets video files from a list of specific file paths.
+    /// </summary>
+    /// <param name="filePaths">The list of file paths.</param>
+    /// <returns>A list of valid video files.</returns>
+    IReadOnlyList<VideoFile> GetVideoFilesFromPaths(IReadOnlyList<string> filePaths);
+
+    /// <summary>
     /// Renames a video file on disk.
     /// </summary>
     /// <param name="file">The video file entity.</param>

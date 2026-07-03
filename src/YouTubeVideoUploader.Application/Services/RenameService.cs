@@ -61,6 +61,39 @@ public class RenameService : IRenameService
     }
 
     /// <inheritdoc />
+    public IReadOnlyList<RenamePair> PreviewRenamesSelected(string directoryPath, IReadOnlyList<string> selectedFilePaths, RenameTemplate template, IRenameStrategy strategy)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(directoryPath);
+        ArgumentNullException.ThrowIfNull(selectedFilePaths);
+        ArgumentNullException.ThrowIfNull(template);
+        ArgumentNullException.ThrowIfNull(strategy);
+
+        var files = _fileSystemRepository.GetVideoFilesFromPaths(selectedFilePaths)
+            .OrderBy(f => f.CreationDate)
+            .ToList();
+
+        int maxItemsToProcess = strategy.RequiresNameList && template.MaxItems > 0
+            ? Math.Min(files.Count, template.MaxItems)
+            : files.Count;
+
+        var pairs = new List<RenamePair>();
+        var proposedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < maxItemsToProcess; i++)
+        {
+            var file = files[i];
+            string generatedName = strategy.GenerateNewName(file, i, template);
+            string uniqueName = GenerateUniqueFileName(directoryPath, generatedName, proposedNames);
+            string newFullPath = Path.Combine(directoryPath, uniqueName);
+
+            pairs.Add(new RenamePair(file, uniqueName, newFullPath));
+            proposedNames.Add(uniqueName);
+        }
+
+        return pairs;
+    }
+
+    /// <inheritdoc />
     public void ExecuteRenames(IReadOnlyList<RenamePair> pairs)
     {
         ArgumentNullException.ThrowIfNull(pairs);

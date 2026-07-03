@@ -80,6 +80,47 @@ public class UploadOrchestrator : IUploadOrchestrator
     }
 
     /// <inheritdoc />
+    public IReadOnlyList<UploadJob> PrepareUploadBatchSelected(string directoryPath, IReadOnlyList<string> selectedFilePaths, UploadConfiguration config)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(directoryPath);
+        ArgumentNullException.ThrowIfNull(selectedFilePaths);
+        ArgumentNullException.ThrowIfNull(config);
+
+        // Fetch video files from paths
+        var files = _fileSystemRepository.GetVideoFilesFromPaths(selectedFilePaths);
+
+        // Sort files naturally by name
+        var sortedFiles = files
+            .OrderBy(f => f.FileName, new NaturalStringComparer())
+            .ToList();
+
+        var uploadedLogs = _uploadLogRepository.GetUploadedFileNames();
+        var jobs = new List<UploadJob>();
+
+        // Calculate publish dates for all files in order
+        var publishDates = _scheduleCalculator.CalculatePublishDates(sortedFiles.Count, config.Schedule);
+
+        for (int i = 0; i < sortedFiles.Count; i++)
+        {
+            var file = sortedFiles[i];
+            var publishDate = publishDates[i];
+
+            // Create the job
+            var job = _uploadJobFactory.CreateJob(file, config, publishDate);
+
+            // If already uploaded, mark it as skipped
+            if (uploadedLogs.Contains(file.FileName))
+            {
+                job.MarkSkipped();
+            }
+
+            jobs.Add(job);
+        }
+
+        return jobs;
+    }
+
+    /// <inheritdoc />
     public async Task ExecuteUploadBatchAsync(
         IReadOnlyList<UploadJob> jobs, 
         IProgress<BatchProgress> progress, 
@@ -88,8 +129,8 @@ public class UploadOrchestrator : IUploadOrchestrator
         ArgumentNullException.ThrowIfNull(jobs);
         ArgumentNullException.ThrowIfNull(progress);
 
-        int totalCount = jobs.Count(j => j.Status != Domain.Enums.UploadStatus.Skipped);
-        int completedCount = 0;
+        int totalCount = jobs.Count;
+        int completedCount = jobs.Count(j => j.Status == Domain.Enums.UploadStatus.Completed || j.Status == Domain.Enums.UploadStatus.Skipped);
 
         foreach (var job in jobs)
         {

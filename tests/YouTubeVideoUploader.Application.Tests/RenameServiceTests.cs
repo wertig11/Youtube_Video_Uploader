@@ -19,6 +19,9 @@ public class RenameServiceTests
 
         public IReadOnlyList<VideoFile> GetVideoFiles(string directoryPath) => Files;
 
+        public IReadOnlyList<VideoFile> GetVideoFilesFromPaths(IReadOnlyList<string> filePaths) => 
+            Files.Where(f => filePaths.Contains(f.FilePath, StringComparer.OrdinalIgnoreCase)).ToList();
+
         public void RenameFile(VideoFile file, string newFileName)
         {
             Renamed.Add((file, newFileName));

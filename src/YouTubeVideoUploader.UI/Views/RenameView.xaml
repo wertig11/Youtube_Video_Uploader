@@ -22,9 +22,11 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Text="{Binding FolderPath, UpdateSourceTrigger=PropertyChanged}" Tag="Select video folder path..." ToolTip="Path to the directory containing video files you want to rename." Height="30" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
                 <Button Content="{Binding L.Browse}" Command="{Binding BrowseFolderCommand}" ToolTip="Choose a directory on your computer." Grid.Column="1" Width="80" Height="30"/>
+                <Button Content="Select Files..." Command="{Binding SelectFilesCommand}" ToolTip="Select specific video files to rename." Grid.Column="2" Width="100" Height="30" Margin="10,0,0,0"/>
             </Grid>
         </GroupBox>
 

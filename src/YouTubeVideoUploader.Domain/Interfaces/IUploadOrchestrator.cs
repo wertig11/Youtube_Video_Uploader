@@ -33,6 +33,15 @@ public interface IUploadOrchestrator
     IReadOnlyList<UploadJob> PrepareUploadBatch(string directoryPath, UploadConfiguration config);
 
     /// <summary>
+    /// Prepares upload jobs from a list of specific selected file paths.
+    /// </summary>
+    /// <param name="directoryPath">The base directory path.</param>
+    /// <param name="selectedFilePaths">The list of specific file paths.</param>
+    /// <param name="config">The upload configuration settings.</param>
+    /// <returns>A list of pending upload jobs.</returns>
+    IReadOnlyList<UploadJob> PrepareUploadBatchSelected(string directoryPath, IReadOnlyList<string> selectedFilePaths, UploadConfiguration config);
+
+    /// <summary>
     /// Executes the upload batch sequentially.
     /// </summary>
     /// <param name="jobs">The list of upload jobs to execute.</param>

@@ -44,7 +44,7 @@ public class UploadOrchestratorTests
         {
             StartDate = new DateOnly(2026, 7, 1),
             PublishTime = new TimeOnly(12, 0, 0),
-            IntervalDays = 2 // Every 2 days
+            IntervalDays = 1 // Every other day (translates to step = 2 days)
         };
 
         // Act
@@ -66,6 +66,10 @@ public class UploadOrchestratorTests
                 new("C:\\vids\\1.mp4", "1.mp4", ".mp4", DateTime.Now, 100),
                 new("C:\\vids\\2.mp4", "2.mp4", ".mp4", DateTime.Now, 100)
             };
+        }
+        public IReadOnlyList<VideoFile> GetVideoFilesFromPaths(IReadOnlyList<string> filePaths)
+        {
+            return filePaths.Select(p => new VideoFile(p, System.IO.Path.GetFileName(p), System.IO.Path.GetExtension(p), DateTime.Now, 100)).ToList();
         }
         public void RenameFile(VideoFile file, string newFileName) { }
         public bool FileExists(string path) => false;
