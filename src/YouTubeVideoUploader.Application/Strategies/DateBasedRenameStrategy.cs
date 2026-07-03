@@ -39,6 +39,16 @@ public class DateBasedRenameStrategy : IRenameStrategy
         // Replace {Number} with index+1
         pattern = Regex.Replace(pattern, @"\{Number\}", (index + 1).ToString(), RegexOptions.IgnoreCase);
 
+        // Replace custom start index numbers like {17}
+        pattern = Regex.Replace(pattern, @"\{(\d+)\}", m =>
+        {
+            if (int.TryParse(m.Groups[1].Value, out int startNum))
+            {
+                return (startNum + index).ToString();
+            }
+            return m.Value;
+        });
+
         return $"{pattern}{file.Extension}";
     }
 }

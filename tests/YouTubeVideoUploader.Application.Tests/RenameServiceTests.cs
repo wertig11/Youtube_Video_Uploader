@@ -127,4 +127,25 @@ public class RenameServiceTests
         Assert.Equal("Brotato Coop #18", name1);
         Assert.Equal("Brotato Coop #19", name2);
     }
+
+    [Fact]
+    public void DateBasedRenameStrategy_CustomStartIndex_ShouldIncrementCorrectly()
+    {
+        // Arrange
+        var strategy = new DateBasedRenameStrategy();
+        var template = new RenameTemplate
+        {
+            Pattern = "Brotato Coop #{17}",
+            Names = Array.Empty<string>()
+        };
+        var file = new VideoFile("C:\\vids\\file.mp4", "file.mp4", ".mp4", DateTime.Now, 1000);
+
+        // Act
+        string name0 = strategy.GenerateNewName(file, 0, template);
+        string name1 = strategy.GenerateNewName(file, 1, template);
+
+        // Assert
+        Assert.Equal("Brotato Coop #17.mp4", name0);
+        Assert.Equal("Brotato Coop #18.mp4", name1);
+    }
 }
