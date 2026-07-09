@@ -1,5 +1,8 @@
 # YouTube Video Uploader (WPF Desktop App)
 
+[![Download](https://img.shields.io/github/v/release/wertig11/Youtube_Video_Uploader?label=Download%20Installer&color=blue)](https://github.com/wertig11/Youtube_Video_Uploader/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A modern, robust, clean architecture C# .NET 8 desktop application that combines automated local video file renaming and batch scheduled uploading to YouTube with resumable upload tracking, custom interval scheduling, preset management, and multi-language support.
 
 ---
@@ -41,18 +44,19 @@ Dependencies flow strictly inwards following SOLID, GRASP, and GoF patterns:
 
 ## Installation & Deployment
 
-### Run Standalone Build
-1. Open the [Builds](file:///e:/Projects/Making_Programs/Youtube_Video_Uploader/Builds/) folder.
-2. Open the latest versioned folder (e.g., `v1.0.0`) and launch `YouTubeVideoUploader.UI.exe`.
+### Download the Installer
+1. Go to the [Releases](https://github.com/wertig11/Youtube_Video_Uploader/releases) page on GitHub.
+2. Download the latest release asset `YouTubeVideoUploader_v2.0.1_Setup.zip`.
+3. Extract the archive contents to a folder on your computer.
 
-### Using the PowerShell Installer
-You can set up a local installation folder and create a desktop shortcut using the built-in installer:
-1. Open PowerShell as Administrator.
+### Run the Installation Script
+You can easily set up the application and add it to your start menu or desktop:
+1. Open PowerShell inside the extracted folder.
 2. Run the installer:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\install.ps1
    ```
-3. Choose whether to create a Desktop shortcut when prompted.
+3. Follow the prompt to choose whether to create a Desktop shortcut.
 
 ---
 
