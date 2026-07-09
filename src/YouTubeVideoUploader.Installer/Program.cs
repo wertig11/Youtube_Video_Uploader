@@ -19,7 +19,7 @@ static class Program
         bool isUninstall = args.Length > 0 && args[0].Equals("/uninstall", StringComparison.OrdinalIgnoreCase);
         
         // Also detect if the executable itself is named "uninstall.exe"
-        string currentExePath = Assembly.GetExecutingAssembly().Location;
+        string currentExePath = Environment.ProcessPath ?? AppContext.BaseDirectory;
         string exeName = Path.GetFileNameWithoutExtension(currentExePath);
         if (exeName.Equals("uninstall", StringComparison.OrdinalIgnoreCase))
         {
