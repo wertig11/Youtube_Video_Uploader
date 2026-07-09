@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/YouTubeVideoUploader.Application/YouTubeVideoUploader.Application.csproj" />
+    <Project Path="src/YouTubeVideoUploader.Domain/YouTubeVideoUploader.Domain.csproj" />
+    <Project Path="src/YouTubeVideoUploader.Infrastructure/YouTubeVideoUploader.Infrastructure.csproj" />
+    <Project Path="src/YouTubeVideoUploader.UI/YouTubeVideoUploader.UI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/YouTubeVideoUploader.Application.Tests/YouTubeVideoUploader.Application.Tests.csproj" />
+    <Project Path="tests/YouTubeVideoUploader.Domain.Tests/YouTubeVideoUploader.Domain.Tests.csproj" />
+    <Project Path="tests/YouTubeVideoUploader.Infrastructure.Tests/YouTubeVideoUploader.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

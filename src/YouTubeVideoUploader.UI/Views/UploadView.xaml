@@ -1,0 +1,258 @@
+<UserControl x:Class="YouTubeVideoUploader.UI.Views.UploadView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:YouTubeVideoUploader.UI.Views"
+             xmlns:converters="clr-namespace:YouTubeVideoUploader.UI.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+    
+    <UserControl.Resources>
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Folder Selection & Presets -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="280"/>
+            </Grid.ColumnDefinitions>
+            
+            <GroupBox Header="{Binding L.FolderPath}" Margin="0,0,10,0" Padding="10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding FolderPath, UpdateSourceTrigger=PropertyChanged}" Tag="Select video folder path..." ToolTip="Choose the directory containing video files you want to upload." Height="30" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                    <Button Content="{Binding L.Browse}" Command="{Binding BrowseFolderCommand}" ToolTip="Browse local directories." Grid.Column="1" Width="80" Height="30"/>
+                    <Button Content="Select Files..." Command="{Binding SelectFilesCommand}" ToolTip="Select specific video files to upload." Grid.Column="2" Width="100" Height="30" Margin="10,0,0,0"/>
+                </Grid>
+            </GroupBox>
+
+            <GroupBox Header="{Binding L.PresetsTitle}" Grid.Column="1" Padding="10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox ItemsSource="{Binding Presets}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedItem, ElementName=PresetsListUpload}" x:Name="PresetsListUpload" ToolTip="Select a saved configuration profile." Height="30" Margin="0,0,10,0"/>
+                    <Button Content="{Binding L.LoadPreset}" Click="LoadPreset_Click" ToolTip="Load configuration parameters from the selected preset." Grid.Column="1" Width="80" Height="30"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- 2. Configurations (Configuration Panel & Schedule) -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Video Metadata config -->
+            <GroupBox Header="YouTube Config" Margin="0,0,5,0" Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="{Binding L.GameName}" VerticalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding GameName, UpdateSourceTrigger=PropertyChanged}" Tag="e.g. Doom, V Rising..." ToolTip="Name of the game. Substituted in the description template." Height="30" Grid.Column="1" Margin="0,0,0,8" VerticalContentAlignment="Center"/>
+
+                    <TextBlock Text="{Binding L.PlaylistId}" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding PlaylistId, UpdateSourceTrigger=PropertyChanged}" Tag="e.g. PLCjyT8LuDF..." ToolTip="Target YouTube playlist ID where uploaded videos should be added." Height="30" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" VerticalContentAlignment="Center"/>
+
+                    <TextBlock Text="{Binding L.StaticTags}" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}" Tag="e.g. coop, walkthrough (comma separated)..." ToolTip="List of tags applied to all uploaded videos in this batch." Height="30" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8" VerticalContentAlignment="Center"/>
+
+                    <TextBlock Text="{Binding L.DescriptionTemplate}" Grid.Row="3" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding DescriptionTemplate, UpdateSourceTrigger=PropertyChanged}" Tag="e.g. Gameplay from {GameName}" ToolTip="Template for video description. {GameName} placeholder is substituted automatically." Height="30" Grid.Row="3" Grid.Column="1" VerticalContentAlignment="Center"/>
+                </Grid>
+            </GroupBox>
+
+            <!-- Schedule config -->
+            <GroupBox Header="Publish Schedule" Grid.Column="1" Margin="5,0,0,0" Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="{Binding L.StartDate}" VerticalAlignment="Center" Margin="0,0,0,8"/>
+                    <DatePicker SelectedDate="{Binding StartDate}" ToolTip="Select starting publication date for the first video in order." Height="24" Grid.Column="1" Margin="0,0,0,8"/>
+
+                    <TextBlock Text="{Binding L.PublishTime}" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding PublishTimeText, UpdateSourceTrigger=PropertyChanged}" Tag="e.g. 06:45" ToolTip="Time of day (UTC/Local depending on API settings) when videos go public." Height="30" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" VerticalContentAlignment="Center"/>
+
+                    <TextBlock Text="{Binding L.PublishInterval}" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding IntervalDays, UpdateSourceTrigger=PropertyChanged}" Tag="e.g. 1 (for daily)" ToolTip="Interval in days between video publications (e.g. 1 = daily, 2 = every other day)." Height="30" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8" VerticalContentAlignment="Center"/>
+
+                    <Button Content="Prepare Batch / Refresh" Command="{Binding PrepareBatchCommand}" ToolTip="Scan files, filter uploaded, and compute scheduled release dates." Grid.Row="3" Grid.ColumnSpan="2" Height="30" VerticalAlignment="Bottom" Background="#F3F4F6"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <!-- 3. Grid of files in batch -->
+        <GroupBox Header="Videos Batch List" Grid.Row="2" Margin="0,0,0,10" Padding="5">
+            <DataGrid ItemsSource="{Binding UploadJobs}" AutoGenerateColumns="False" CanUserAddRows="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" SelectionMode="Single" Background="White">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{Binding DataContext.L.HeaderTitle, RelativeSource={RelativeSource AncestorType=UserControl}}" Binding="{Binding Title}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="{Binding DataContext.L.HeaderPublishDate, RelativeSource={RelativeSource AncestorType=UserControl}}" Binding="{Binding ScheduledPublishDate, StringFormat='\{0:yyyy-MM-dd HH:mm UTC\}'}" Width="160" IsReadOnly="True"/>
+                    <DataGridTemplateColumn Header="{Binding DataContext.L.HeaderStatus, RelativeSource={RelativeSource AncestorType=UserControl}}" Width="120" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Status}" FontWeight="SemiBold" 
+                                           Foreground="{Binding Status, Converter={StaticResource StatusToColorConverter}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <!-- 4. Progress Bars -->
+        <Grid Grid.Row="3" Margin="0,0,0,10" Visibility="{Binding IsUploading, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Visible}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Current Video Progress -->
+            <StackPanel Margin="0,0,0,5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding CurrentVideoTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Grid.Column="1">
+                        <Run Text="{Binding CurrentVideoPercent, StringFormat='\{0:F1\}%'}"/>
+                        <Run Text="  "/>
+                        <Run Text="{Binding CurrentSpeedText}" Foreground="Gray"/>
+                        <Run Text="  "/>
+                        <Run Text="{Binding CurrentVideoEtaText, StringFormat='(ETA: \{0\})'}"/>
+                    </TextBlock>
+                </Grid>
+                <ProgressBar Value="{Binding CurrentVideoPercent}" Height="10" Margin="0,5,0,0" Foreground="#3B82F6"/>
+            </StackPanel>
+
+            <!-- Overall Progress -->
+            <StackPanel Grid.Row="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Overall batch uploading progress:" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1">
+                        <Run Text="{Binding ProgressText}"/>
+                        <Run Text="  "/>
+                        <Run Text="{Binding OverallPercent, StringFormat='(\{0\}%)'}"/>
+                        <Run Text="  "/>
+                        <Run Text="{Binding OverallEtaText, StringFormat='(ETA: \{0\})'}"/>
+                    </TextBlock>
+                </Grid>
+                <ProgressBar Value="{Binding OverallPercent}" Height="10" Margin="0,5,0,0" Foreground="#22C55E"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- 5. Actions & Authentication status -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Auth Status -->
+            <StackPanel Orientation="Horizontal" Grid.Column="0">
+                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="Red"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAuthenticated}" Value="True">
+                                    <Setter Property="Fill" Value="Green"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Text="{Binding L.AuthStatusConnected}" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAuthenticated}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding L.AuthStatusDisconnected}" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAuthenticated}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Button Content="{Binding L.Authenticate}" Command="{Binding AuthenticateCommand}" Width="100" Height="26" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Save Preset Input -->
+            <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding L.PresetNamePrompt}" VerticalAlignment="Center" Margin="20,0,5,0"/>
+                <TextBox Text="{Binding PresetName, UpdateSourceTrigger=PropertyChanged}" Tag="Preset name..." ToolTip="Enter a name to save this configuration configuration as a preset." Width="120" Height="30" VerticalContentAlignment="Center" Margin="0,0,5,0"/>
+                <Button Content="{Binding L.SavePreset}" Command="{Binding SaveAsPresetCommand}" ToolTip="Save these YouTube and schedule options as a profile." Width="90" Height="30"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Grid.Column="3">
+                <Button Content="{Binding L.Cancel}" Command="{Binding CancelUploadCommand}" Visibility="{Binding IsUploading, Converter={StaticResource BoolToVisibilityConverter}}" ToolTip="Cancel active upload session." Width="100" Height="30" Margin="0,0,10,0"/>
+                <Button Content="{Binding L.StartUpload}" Command="{Binding StartUploadCommand}" ToolTip="Start uploading batch of pending videos to YouTube." Width="120" Height="30" Background="#3B82F6" Foreground="White" FontWeight="Bold">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="IsEnabled" Value="True"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsUploading}" Value="True">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>
