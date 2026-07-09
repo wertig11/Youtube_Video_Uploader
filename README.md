@@ -46,17 +46,12 @@ Dependencies flow strictly inwards following SOLID, GRASP, and GoF patterns:
 
 ### Download the Installer
 1. Go to the [Releases](https://github.com/wertig11/Youtube_Video_Uploader/releases) page on GitHub.
-2. Download the latest release asset `YouTubeVideoUploader_v2.0.1_Setup.zip`.
-3. Extract the archive contents to a folder on your computer.
+2. Download the latest standalone installer: `YouTubeVideoUploader_v2.0.1_Setup.exe`.
 
-### Run the Installation Script
-You can easily set up the application and add it to your start menu or desktop:
-1. Open PowerShell inside the extracted folder.
-2. Run the installer:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\install.ps1
-   ```
-3. Follow the prompt to choose whether to create a Desktop shortcut.
+### Install the Application
+1. Double-click the downloaded `YouTubeVideoUploader_v2.0.1_Setup.exe` file.
+2. Follow the on-screen prompts (no command-line or administrative access required) to copy the application files.
+3. Choose whether to create a Desktop shortcut when prompted.
 
 ---
 
