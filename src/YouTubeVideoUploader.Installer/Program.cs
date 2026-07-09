@@ -115,8 +115,8 @@ static class Program
             string uninstallExePath = Path.Combine(installPath, "Uninstall.exe");
             File.Copy(currentExePath, uninstallExePath, overwrite: true);
 
-            // 5. Create Start Menu shortcuts and folder
-            string startMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "YouTube Video Uploader");
+            // 5. Create Start Menu shortcuts and folder in SpecialFolder.Programs
+            string startMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "YouTube Video Uploader");
             if (!Directory.Exists(startMenuPath))
             {
                 Directory.CreateDirectory(startMenuPath);
@@ -198,14 +198,14 @@ static class Program
                 File.Delete(desktopShortcut);
             }
 
-            // Start Menu Folder and Shortcuts
-            string startMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "YouTube Video Uploader");
+            // Start Menu Folder and Shortcuts (SpecialFolder.Programs)
+            string startMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "YouTube Video Uploader");
             if (Directory.Exists(startMenuPath))
             {
                 Directory.Delete(startMenuPath, true);
             }
 
-            // 3. Delete App Files (except the currently running uninstaller EXE)
+            // 3. Delete App Files (except the currently running uninstaller EXE itself)
             foreach (string file in Directory.GetFiles(installPath))
             {
                 if (!string.Equals(file, currentExePath, StringComparison.OrdinalIgnoreCase))
@@ -218,9 +218,16 @@ static class Program
                 try { Directory.Delete(subDir, true); } catch {}
             }
 
+            // Show confirmation first so we don't hold the lock on the directory when showing MessageBox
+            MessageBox.Show(
+                "YouTube Video Uploader has been successfully uninstalled from your computer.",
+                "Uninstall Completed",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
             // 4. Delay-delete the uninstaller executable and the install directory itself
-            // We use cmd.exe to wait 1 second (so this process exits) then delete the folder
-            string cmd = $"/c timeout /t 1 && rmdir /s /q \"{installPath}\"";
+            // We use cmd.exe with choice to delay execution and delete the folder, then immediately exit.
+            string cmd = $"/c choice /t 2 /d y /n > nul & rmdir /s /q \"{installPath}\"";
             Process.Start(new ProcessStartInfo
             {
                 FileName = "cmd.exe",
@@ -228,12 +235,6 @@ static class Program
                 CreateNoWindow = true,
                 UseShellExecute = false
             });
-
-            MessageBox.Show(
-                "YouTube Video Uploader has been successfully uninstalled from your computer.",
-                "Uninstall Completed",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
