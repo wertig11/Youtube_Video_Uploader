@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -135,7 +136,10 @@ public class InstallForm : Form
                 "Uninstall YouTube Video Uploader",
                 "/uninstall");
 
-            // 5. Ask about Desktop Shortcut
+            // 5. Notify Windows Shell to refresh Start Menu cache
+            SHChangeNotify(0x08000000, 0x0000, IntPtr.Zero, IntPtr.Zero);
+
+            // 6. Ask about Desktop Shortcut
             DialogResult shortcutResult = MessageBox.Show(
                 "Would you like to create a desktop shortcut?",
                 "Create Shortcut",
@@ -193,6 +197,13 @@ public class InstallForm : Form
             }
         }
     }
+
+    /// <summary>
+    /// Notifies the Windows Shell that an event has occurred that affects its operation,
+    /// forcing it to refresh the Start Menu program list cache.
+    /// </summary>
+    [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+    private static extern void SHChangeNotify(int wEventId, int uFlags, IntPtr dwItem1, IntPtr dwItem2);
 }
 
 static class Program
