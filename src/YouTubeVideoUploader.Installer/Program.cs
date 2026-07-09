@@ -1,11 +1,199 @@
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace YouTubeVideoUploader.Installer;
+
+public class InstallForm : Form
+{
+    private Label lblStatus;
+    private ProgressBar progressBar;
+    private string installPath;
+    private string currentExePath;
+
+    public InstallForm(string installPath, string currentExePath)
+    {
+        this.installPath = installPath;
+        this.currentExePath = currentExePath;
+
+        // Form settings
+        this.Text = "YouTube Video Uploader Setup";
+        this.Size = new Size(460, 160);
+        this.FormBorderStyle = FormBorderStyle.FixedDialog;
+        this.StartPosition = FormStartPosition.CenterScreen;
+        this.MaximizeBox = false;
+        this.MinimizeBox = false;
+
+        // Label status
+        lblStatus = new Label();
+        lblStatus.Text = "Preparing installation...";
+        lblStatus.Location = new Point(20, 20);
+        lblStatus.Size = new Size(410, 30);
+        lblStatus.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
+
+        // Progress bar
+        progressBar = new ProgressBar();
+        progressBar.Location = new Point(20, 55);
+        progressBar.Size = new Size(405, 23);
+        progressBar.Style = ProgressBarStyle.Continuous;
+
+        this.Controls.Add(lblStatus);
+        this.Controls.Add(progressBar);
+
+        // Run installation when form is shown
+        this.Shown += async (s, e) => await StartInstallationAsync();
+    }
+
+    private async Task StartInstallationAsync()
+    {
+        try
+        {
+            // 1. Prepare directory
+            lblStatus.Text = "Creating installation directory...";
+            await Task.Delay(200);
+            if (!Directory.Exists(installPath))
+            {
+                Directory.CreateDirectory(installPath);
+            }
+
+            // 2. Extract payload zip
+            lblStatus.Text = "Extracting application payload...";
+            string zipPath = Path.Combine(Path.GetTempPath(), "app_payload.zip");
+            var assembly = Assembly.GetExecutingAssembly();
+            string resourceName = "YouTubeVideoUploader.Installer.app.zip";
+
+            using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidOperationException($"Could not find embedded resource: {resourceName}"))
+            using (FileStream fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write))
+            {
+                await resourceStream.CopyToAsync(fileStream);
+            }
+
+            using (ZipArchive archive = ZipFile.OpenRead(zipPath))
+            {
+                int totalFiles = archive.Entries.Count;
+                progressBar.Maximum = totalFiles;
+                int currentFile = 0;
+
+                foreach (ZipArchiveEntry entry in archive.Entries)
+                {
+                    if (string.IsNullOrEmpty(entry.Name)) continue;
+
+                    string destinationPath = Path.GetFullPath(Path.Combine(installPath, entry.FullName));
+                    string? dir = Path.GetDirectoryName(destinationPath);
+                    if (dir != null && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+
+                    lblStatus.Text = $"Extracting: {entry.Name}";
+                    
+                    // Run extraction on background thread to keep UI alive
+                    await Task.Run(() => entry.ExtractToFile(destinationPath, overwrite: true));
+                    
+                    currentFile++;
+                    progressBar.Value = currentFile;
+                    await Task.Delay(25); // Slight delay so the user can see it processing
+                }
+            }
+
+            if (File.Exists(zipPath))
+            {
+                File.Delete(zipPath);
+            }
+
+            // 3. Register Uninstaller
+            lblStatus.Text = "Registering uninstaller...";
+            await Task.Delay(200);
+            string uninstallExePath = Path.Combine(installPath, "Uninstall.exe");
+            await Task.Run(() => File.Copy(currentExePath, uninstallExePath, overwrite: true));
+
+            // 4. Create Shortcuts in SpecialFolder.Programs
+            lblStatus.Text = "Creating shortcuts...";
+            await Task.Delay(200);
+            string startMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "YouTube Video Uploader");
+            if (!Directory.Exists(startMenuPath))
+            {
+                Directory.CreateDirectory(startMenuPath);
+            }
+
+            CreateShortcutFile(
+                Path.Combine(startMenuPath, "YouTube Video Uploader.lnk"),
+                Path.Combine(installPath, "YouTubeVideoUploader.UI.exe"),
+                installPath,
+                "YouTube Video Uploader Batch Renamer & Publisher");
+
+            CreateShortcutFile(
+                Path.Combine(startMenuPath, "Uninstall.lnk"),
+                uninstallExePath,
+                installPath,
+                "Uninstall YouTube Video Uploader",
+                "/uninstall");
+
+            // 5. Ask about Desktop Shortcut
+            DialogResult shortcutResult = MessageBox.Show(
+                "Would you like to create a desktop shortcut?",
+                "Create Shortcut",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (shortcutResult == DialogResult.Yes)
+            {
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                CreateShortcutFile(
+                    Path.Combine(desktopPath, "YouTube Video Uploader.lnk"),
+                    Path.Combine(installPath, "YouTubeVideoUploader.UI.exe"),
+                    installPath,
+                    "YouTube Video Uploader Batch Renamer & Publisher");
+            }
+
+            MessageBox.Show(
+                $"YouTube Video Uploader has been installed successfully!\n\nInstallation Path: {installPath}",
+                "Success",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"An error occurred during installation:\n\n{ex.Message}",
+                "Installation Failed",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            this.DialogResult = DialogResult.Abort;
+            this.Close();
+        }
+    }
+
+    private void CreateShortcutFile(string shortcutPath, string targetExePath, string installPath, string description, string arguments = "")
+    {
+        Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
+        if (shellType != null)
+        {
+            dynamic? shell = Activator.CreateInstance(shellType);
+            if (shell != null)
+            {
+                dynamic shortcut = shell.CreateShortcut(shortcutPath);
+                shortcut.TargetPath = targetExePath;
+                shortcut.WorkingDirectory = installPath;
+                shortcut.Description = description;
+                if (!string.IsNullOrEmpty(arguments))
+                {
+                    shortcut.Arguments = arguments;
+                }
+                shortcut.Save();
+            }
+        }
+    }
+}
 
 static class Program
 {
@@ -50,123 +238,30 @@ static class Program
             return;
         }
 
-        try
+        // 2. Select Directory
+        string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "YouTubeVideoUploader");
+        string installPath = defaultPath;
+
+        using (var folderDialog = new FolderBrowserDialog())
         {
-            // 2. Select Directory
-            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "YouTubeVideoUploader");
-            string installPath = defaultPath;
-
-            using (var folderDialog = new FolderBrowserDialog())
+            folderDialog.Description = "Select the installation directory for YouTube Video Uploader:";
+            folderDialog.SelectedPath = defaultPath;
+            folderDialog.ShowNewFolderButton = true;
+            
+            if (folderDialog.ShowDialog() == DialogResult.OK)
             {
-                folderDialog.Description = "Select the installation directory for YouTube Video Uploader:";
-                folderDialog.SelectedPath = defaultPath;
-                folderDialog.ShowNewFolderButton = true;
-                
-                if (folderDialog.ShowDialog() == DialogResult.OK)
-                {
-                    installPath = folderDialog.SelectedPath;
-                }
-                else
-                {
-                    return; // User cancelled
-                }
+                installPath = folderDialog.SelectedPath;
             }
-
-            if (!Directory.Exists(installPath))
+            else
             {
-                Directory.CreateDirectory(installPath);
+                return; // User cancelled
             }
-
-            // 3. Extract embedded payload
-            string zipPath = Path.Combine(Path.GetTempPath(), "app_payload.zip");
-            var assembly = Assembly.GetExecutingAssembly();
-            string resourceName = "YouTubeVideoUploader.Installer.app.zip";
-
-            using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName)
-                ?? throw new InvalidOperationException($"Could not find embedded resource: {resourceName}"))
-            using (FileStream fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write))
-            {
-                resourceStream.CopyTo(fileStream);
-            }
-
-            using (ZipArchive archive = ZipFile.OpenRead(zipPath))
-            {
-                foreach (ZipArchiveEntry entry in archive.Entries)
-                {
-                    if (string.IsNullOrEmpty(entry.Name)) continue;
-
-                    string destinationPath = Path.GetFullPath(Path.Combine(installPath, entry.FullName));
-                    string? dir = Path.GetDirectoryName(destinationPath);
-                    if (dir != null && !Directory.Exists(dir))
-                    {
-                        Directory.CreateDirectory(dir);
-                    }
-
-                    entry.ExtractToFile(destinationPath, overwrite: true);
-                }
-            }
-
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-            }
-
-            // 4. Copy self to installation directory as Uninstall.exe
-            string uninstallExePath = Path.Combine(installPath, "Uninstall.exe");
-            File.Copy(currentExePath, uninstallExePath, overwrite: true);
-
-            // 5. Create Start Menu shortcuts and folder in SpecialFolder.Programs
-            string startMenuPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "YouTube Video Uploader");
-            if (!Directory.Exists(startMenuPath))
-            {
-                Directory.CreateDirectory(startMenuPath);
-            }
-
-            // Create App launch shortcut in Start Menu
-            CreateShortcutFile(
-                Path.Combine(startMenuPath, "YouTube Video Uploader.lnk"),
-                Path.Combine(installPath, "YouTubeVideoUploader.UI.exe"),
-                installPath,
-                "YouTube Video Uploader Batch Renamer & Publisher");
-
-            // Create Uninstall shortcut in Start Menu
-            CreateShortcutFile(
-                Path.Combine(startMenuPath, "Uninstall.lnk"),
-                uninstallExePath,
-                installPath,
-                "Uninstall YouTube Video Uploader",
-                "/uninstall");
-
-            // 6. Ask about Desktop Shortcut
-            DialogResult shortcutResult = MessageBox.Show(
-                "Installation completed successfully!\n\nWould you like to create a desktop shortcut?",
-                "Create Shortcut",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (shortcutResult == DialogResult.Yes)
-            {
-                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                CreateShortcutFile(
-                    Path.Combine(desktopPath, "YouTube Video Uploader.lnk"),
-                    Path.Combine(installPath, "YouTubeVideoUploader.UI.exe"),
-                    installPath,
-                    "YouTube Video Uploader Batch Renamer & Publisher");
-            }
-
-            MessageBox.Show(
-                $"YouTube Video Uploader has been installed successfully!\n\nInstallation Path: {installPath}",
-                "Success",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
         }
-        catch (Exception ex)
+
+        // 3. Launch UI Progress dialog form
+        using (var form = new InstallForm(installPath, currentExePath))
         {
-            MessageBox.Show(
-                $"An error occurred during installation:\n\n{ex.Message}",
-                "Installation Failed",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+            Application.Run(form);
         }
     }
 
@@ -243,27 +338,6 @@ static class Program
                 "Uninstall Failed",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
-        }
-    }
-
-    static void CreateShortcutFile(string shortcutPath, string targetExePath, string installPath, string description, string arguments = "")
-    {
-        Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
-        if (shellType != null)
-        {
-            dynamic? shell = Activator.CreateInstance(shellType);
-            if (shell != null)
-            {
-                dynamic shortcut = shell.CreateShortcut(shortcutPath);
-                shortcut.TargetPath = targetExePath;
-                shortcut.WorkingDirectory = installPath;
-                shortcut.Description = description;
-                if (!string.IsNullOrEmpty(arguments))
-                {
-                    shortcut.Arguments = arguments;
-                }
-                shortcut.Save();
-            }
         }
     }
 }
